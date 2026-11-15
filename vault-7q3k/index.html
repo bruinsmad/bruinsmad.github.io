@@ -15,6 +15,8 @@
 html,body{margin:0;min-height:100%;background:radial-gradient(1200px 600px at 50% -10%,#1d2750,var(--bg)) fixed;color:var(--ink);font-family:Inter,system-ui,sans-serif}
 body{display:flex;justify-content:center;padding:max(12px,env(safe-area-inset-top)) 12px max(16px,env(safe-area-inset-bottom));min-height:100vh;min-height:100dvh;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
 button{touch-action:manipulation}
+.logo{white-space:nowrap}
+@media (max-width:440px){.logo{font-size:13px}.dots{gap:4px}.dot{width:11px;height:11px}}
 @media (max-width:420px){.card{padding:16px}.key{padding:12px 0}.display{font-size:32px;letter-spacing:8px}.mashBtn{width:150px;height:150px}}
 #app{width:100%;max-width:560px}
 header{display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px}
@@ -118,6 +120,13 @@ input[type=range].dialr{-webkit-appearance:none;appearance:none;width:100%;heigh
 input[type=range].dialr::-webkit-slider-thumb{-webkit-appearance:none;width:38px;height:38px;border-radius:50%;background:var(--gold);border:3px solid #a8730c}
 input[type=range].dialr::-moz-range-thumb{width:34px;height:34px;border-radius:50%;background:var(--gold);border:3px solid #a8730c}
 .sig{height:22px;border-radius:11px;background:#070b18;border:2px solid var(--line);overflow:hidden}.sig>div{height:100%;width:0;background:#4da3ff}
+/* cups */
+.cups{position:relative;height:170px;background:#070b18;border:2px solid var(--line);border-radius:14px;overflow:hidden}
+.cupW{position:absolute;bottom:18px;width:64px;height:110px;transform:translateX(-50%);cursor:pointer}
+.cupW .gem{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:30px}
+.cupW .cupB{position:absolute;bottom:0;left:0;width:64px;height:76px;background:linear-gradient(90deg,#a8730c,#f5c542 45%,#ffdf7e 55%,#c48a14);clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);border-radius:6px;transition:transform .25s}
+.cupW.up .cupB{transform:translateY(-44px)}
+@media (max-width:380px){.cupW{width:54px}.cupW .cupB{width:54px;height:66px}}
 #confetti{position:fixed;inset:0;z-index:2;pointer-events:none}
 @media (max-height:520px) and (orientation:landscape){
   .ball{width:60px;height:60px;left:auto;right:16px;transform:none}
@@ -276,7 +285,7 @@ function startMusic(){
 function stopMusic(){ clearInterval(musicTimer); musicTimer = null; }
 
 /* ================== flow ================== */
-const games = [gameKeypad, gameCoins, gameGuard, gameLock, gameFake, gameWires, gameDial, gameMash];
+const games = [gameKeypad, gameCoins, gameGuard, gameLock, gameFake, gameWires, gameCups, gameDial, gameLasers, gameMash];
 const T = name => `<div class="tag">Trial ${level + 1} / ${games.length} · ${name}</div>`;
 let level = 0, cleanup = null;
 
@@ -668,6 +677,166 @@ function gameDial(root, done){
   }
   newTarget(); showCombo(); raf = requestAnimationFrame(loop);
   return () => { alive = false; cancelAnimationFrame(raf); };
+}
+
+/* ================== Cups: track the diamond ================== */
+function gameCups(root, done){
+  const rounds = [{n: 3, swaps: 8, ms: 340}, {n: 4, swaps: 12, ms: 260}, {n: 5, swaps: 16, ms: 200}];
+  root.innerHTML = `${T('Cups')}<h2>Track the diamond</h2>
+    <p>Follow the cup with the diamond. Tap it. ${rounds.length} rounds. Wrong = restart.</p>
+    <div class="hudline"><span id="rd"></span></div>
+    <div class="cups" id="cups"></div><div class="status" id="st"></div>`;
+  const box = root.querySelector('#cups'), rd = root.querySelector('#rd'), st = root.querySelector('#st');
+  let r = 0, alive = true, canPick = false, gem = 0, cupAt = [], els = [];
+  const slotLeft = (slot, n) => ((slot + .5) / n * 100) + '%';
+  function build(n){
+    box.innerHTML = ''; els = []; cupAt = [];
+    for(let i = 0; i < n; i++){
+      const w = document.createElement('div'); w.className = 'cupW';
+      w.innerHTML = `${i === gem ? '<div class="gem">💎</div>' : ''}<div class="cupB"></div>`;
+      w.style.left = slotLeft(i, n);
+      w.addEventListener('pointerdown', e => { e.preventDefault(); pick(i); });
+      box.appendChild(w); els.push(w); cupAt.push(i);
+    }
+  }
+  const lift = (i, up) => els[i].classList.toggle('up', up);
+  async function round(){
+    canPick = false; st.className = 'status'; st.textContent = '';
+    const {n, swaps, ms} = rounds[r];
+    rd.textContent = `Round ${r + 1} / ${rounds.length}`;
+    gem = rand(n); build(n);
+    els.forEach(e => e.style.transition = `left ${ms}ms ease-in-out`);
+    await wait(400); if(!alive) return;
+    lift(gem, true); await wait(1100); lift(gem, false); await wait(450);
+    for(let k = 0; k < swaps; k++){
+      if(!alive) return;
+      const a = rand(n); let b = rand(n - 1); if(b >= a) b++;
+      [cupAt[a], cupAt[b]] = [cupAt[b], cupAt[a]];
+      els[cupAt[a]].style.left = slotLeft(a, n); els[cupAt[b]].style.left = slotLeft(b, n);
+      sfx.blip(500 + rand(200));
+      await wait(ms + 30);
+    }
+    if(!alive) return;
+    st.textContent = 'Tap the cup'; canPick = true;
+  }
+  async function pick(i){
+    if(!canPick || !alive) return;
+    canPick = false; lift(i, true);
+    if(i === gem){
+      sfx.good(); st.className = 'status good'; st.textContent = 'Found it';
+      await wait(800); if(!alive) return;
+      r++;
+      if(r >= rounds.length){ alive = false; done(); return; }
+      round();
+    } else {
+      sfx.bad(); lift(gem, true); st.className = 'status bad'; st.textContent = 'Wrong. Restart.';
+      await wait(1300); if(!alive) return;
+      r = 0; round();
+    }
+  }
+  round();
+  return () => { alive = false; };
+}
+
+/* ================== Lasers: survive ================== */
+function gameLasers(root, done){
+  const SURVIVE = 20;
+  root.innerHTML = `${T('Lasers')}<h2>Dodge the lasers</h2>
+    <p>Drag to move. Red line = laser coming. Survive ${SURVIVE} s. Hit = restart.</p>
+    <div class="hudline"><span id="tt">0.0 / ${SURVIVE} s</span><span id="msg"></span></div>
+    <canvas class="game" id="cv"></canvas>`;
+  const cv = root.querySelector('#cv'), ctx = cv.getContext('2d'), tt = root.querySelector('#tt'), msg = root.querySelector('#msg');
+  const W = 480, H = 400, dpr = window.devicePixelRatio || 1, PR = 10;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+  let pl = {x: W/2, y: H/2}, lasers = [], t = 0, spawn = 1.2, alive = true, raf, last = performance.now(), flash = 0, grace = 0;
+  const keys = {};
+  const scale = () => W / cv.getBoundingClientRect().width;
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY}; try{ cv.setPointerCapture(e.pointerId); }catch(_){} e.preventDefault(); });
+  cv.addEventListener('pointermove', e => {
+    if(e.pointerType === 'mouse' && !drag){ const r = cv.getBoundingClientRect(); pl.x = (e.clientX - r.left) * scale(); pl.y = (e.clientY - r.top) * scale(); return; }
+    if(!drag) return;
+    const k = scale() * 1.15;
+    pl.x += (e.clientX - drag.x) * k; pl.y += (e.clientY - drag.y) * k; drag = {x: e.clientX, y: e.clientY};
+  });
+  const up = () => { drag = null; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  const kd = e => { keys[e.key] = true; if(e.key.startsWith('Arrow')) e.preventDefault(); }, ku = e => { keys[e.key] = false; };
+  addEventListener('keydown', kd); addEventListener('keyup', ku);
+
+  function addLaser(){
+    const d = Math.min(1, t / SURVIVE);
+    const horiz = Math.random() < .5;
+    const thick = 16 + d * 10;
+    // aim some lasers at the player
+    const aim = Math.random() < .45;
+    const pos = horiz ? (aim ? pl.y : 20 + Math.random() * (H - 40)) : (aim ? pl.x : 20 + Math.random() * (W - 40));
+    lasers.push({horiz, pos, thick, age: 0, warn: .75 - d * .25, fire: .35});
+  }
+  function hit(){
+    sfx.bad(); flash = .5; msg.textContent = 'Hit. Restart.';
+    t = 0; lasers = []; spawn = 1.2; grace = 1;
+  }
+  function loop(now){
+    if(!alive) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    const sp = 260 * dt;
+    if(keys.ArrowLeft || keys.a) pl.x -= sp; if(keys.ArrowRight || keys.d) pl.x += sp;
+    if(keys.ArrowUp || keys.w) pl.y -= sp; if(keys.ArrowDown || keys.s) pl.y += sp;
+    pl.x = Math.max(PR, Math.min(W - PR, pl.x)); pl.y = Math.max(PR, Math.min(H - PR, pl.y));
+    if(grace > 0){ grace -= dt; if(grace <= 0) msg.textContent = ''; }
+    else {
+      t += dt;
+      spawn -= dt;
+      if(spawn <= 0){
+        addLaser(); const d = Math.min(1, t / SURVIVE);
+        if(d > .5 && Math.random() < .5) addLaser();
+        spawn = .95 - d * .45;
+      }
+    }
+    for(const L of lasers){
+      L.age += dt;
+      if(L.age > L.warn && L.age < L.warn + L.fire){
+        const dist = L.horiz ? Math.abs(pl.y - L.pos) : Math.abs(pl.x - L.pos);
+        if(dist < L.thick / 2 + PR - 2){ hit(); break; }
+        if(!L.zapped){ L.zapped = true; if(AC) noiseAt(AC.currentTime, .12, .06, 3000); }
+      }
+    }
+    lasers = lasers.filter(L => L.age < L.warn + L.fire);
+    tt.textContent = `${Math.min(t, SURVIVE).toFixed(1)} / ${SURVIVE} s`;
+    draw();
+    if(t >= SURVIVE){ alive = false; msg.textContent = ''; setTimeout(done, 300); return; }
+    raf = requestAnimationFrame(loop);
+  }
+  function draw(){
+    ctx.fillStyle = '#070b18'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#141b33'; ctx.lineWidth = 1;
+    for(let x = 0; x < W; x += 40){ ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for(let y = 0; y < H; y += 40){ ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    for(const L of lasers){
+      const firing = L.age > L.warn;
+      ctx.save();
+      if(firing){
+        ctx.fillStyle = 'rgba(255,60,90,.35)';
+        if(L.horiz) ctx.fillRect(0, L.pos - L.thick/2 - 6, W, L.thick + 12); else ctx.fillRect(L.pos - L.thick/2 - 6, 0, L.thick + 12, H);
+        ctx.fillStyle = '#ff3c5a';
+        if(L.horiz) ctx.fillRect(0, L.pos - L.thick/2, W, L.thick); else ctx.fillRect(L.pos - L.thick/2, 0, L.thick, H);
+        ctx.fillStyle = '#fff';
+        if(L.horiz) ctx.fillRect(0, L.pos - 2, W, 4); else ctx.fillRect(L.pos - 2, 0, 4, H);
+      } else {
+        ctx.strokeStyle = `rgba(255,90,110,${.35 + .5 * Math.abs(Math.sin(L.age * 18))})`; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        if(L.horiz){ ctx.moveTo(0, L.pos); ctx.lineTo(W, L.pos); } else { ctx.moveTo(L.pos, 0); ctx.lineTo(L.pos, H); }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.fillStyle = '#3ddc97'; ctx.beginPath(); ctx.arc(pl.x, pl.y, PR, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    if(flash > 0){ ctx.fillStyle = `rgba(255,90,110,${flash})`; ctx.fillRect(0, 0, W, H); flash -= .02; }
+  }
+  raf = requestAnimationFrame(loop);
+  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); };
 }
 
 /* ================== Trial 5: force the door ================== */
