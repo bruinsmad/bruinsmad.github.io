@@ -542,16 +542,17 @@ function gameMash(root, done){
     <div class="meter"><div id="fill"></div></div>
     <div class="center"><button class="btn mashBtn" id="push">PUSH!</button></div><div class="status" id="st"></div>`;
   const fill = root.querySelector('#fill'), push = root.querySelector('#push'), st = root.querySelector('#st');
-  let v = 0, alive = true, raf, last = performance.now();
+  let v = 0, alive = true, raf, last = performance.now(), t0 = performance.now();
   const lines = ['Come on!', 'It\'s moving!', 'Harder!!', 'ALMOST!!!'];
-  function bump(){ if(!alive) return; v = Math.min(100, v + 7.35); sfx.blip(200 + v * 6); }
+  function bump(){ if(!alive) return; v = Math.min(100, v + 9); sfx.blip(200 + v * 6); if(v >= 100) win(); }
+  function win(){ alive = false; cancelAnimationFrame(raf); fill.style.width = '100%'; sfx.boom(); st.className = 'status good'; st.textContent = 'THE DOOR IS OPEN!'; setTimeout(done, 600); }
   function loop(now){
     if(!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
-    v = Math.max(0, v - (14 + v * .3) * dt);
+    const ease = Math.max(.45, 1 - (now - t0) / 40000); // door gets lighter the longer you try
+    v = Math.max(0, v - (12 + v * .15) * ease * dt);
     fill.style.width = v + '%';
     st.className = 'status'; st.textContent = v > 4 ? lines[Math.min(3, Math.floor(v / 25))] : '';
-    if(v >= 100){ alive = false; sfx.boom(); st.className = 'status good'; st.textContent = 'THE DOOR IS OPEN!'; setTimeout(done, 600); return; }
     raf = requestAnimationFrame(loop);
   }
   push.addEventListener('pointerdown', e => { e.preventDefault(); bump(); });
