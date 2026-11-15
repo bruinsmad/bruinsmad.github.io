@@ -100,6 +100,24 @@ svg.wires{width:100%;display:block;background:#070b18;border:2px solid var(--lin
 .sub{color:#fff;font-weight:800;font-size:clamp(14px,3.6vw,18px);text-shadow:0 2px 6px rgba(0,0,0,.4);margin:8px 0 14px}
 .krisBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .krisBtns .btn{background:#fff;color:#9b2cff;box-shadow:0 5px 0 #ff2d95;font-size:15px;padding:12px 18px}
+/* guard */
+.guardBox{display:flex;align-items:center;justify-content:center;gap:14px;background:#070b18;border:2px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.guard{font-size:54px;transition:transform .15s}
+.guard.away{transform:scaleX(-1)}
+.light{font-family:Bungee;font-size:18px;padding:8px 12px;border-radius:10px;min-width:140px;text-align:center}
+.light.g{background:var(--good);color:#04241a}.light.y{background:#ffb020;color:#2a1a00}.light.r{background:var(--bad);color:#fff}
+.track{position:relative;height:52px;background:#070b18;border:2px solid var(--line);border-radius:26px;margin-bottom:16px}
+.track .end{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:28px}
+#runner{position:absolute;top:50%;transform:translateY(-50%);font-size:32px;transition:left .15s}
+/* fake gold */
+.goldGrid{display:grid;gap:8px;margin:6px 0}
+.gbar{height:46px;border-radius:8px;border:none;cursor:pointer;padding:0;box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
+.timer{height:8px;border-radius:4px;background:#070b18;overflow:hidden;margin:6px 0 10px}.timer>div{height:100%;background:var(--gold)}
+/* dial */
+input[type=range].dialr{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:7px;background:#070b18;border:1px solid var(--line);outline:none;margin:20px 0 10px;touch-action:none}
+input[type=range].dialr::-webkit-slider-thumb{-webkit-appearance:none;width:38px;height:38px;border-radius:50%;background:var(--gold);border:3px solid #a8730c}
+input[type=range].dialr::-moz-range-thumb{width:34px;height:34px;border-radius:50%;background:var(--gold);border:3px solid #a8730c}
+.sig{height:22px;border-radius:11px;background:#070b18;border:2px solid var(--line);overflow:hidden}.sig>div{height:100%;width:0;background:#4da3ff}
 #confetti{position:fixed;inset:0;z-index:2;pointer-events:none}
 @media (max-height:520px) and (orientation:landscape){
   .ball{width:60px;height:60px;left:auto;right:16px;transform:none}
@@ -258,14 +276,8 @@ function startMusic(){
 function stopMusic(){ clearInterval(musicTimer); musicTimer = null; }
 
 /* ================== flow ================== */
-const games = [gameKeypad, gameCoins, gameLock, gameWires, gameMash];
-const clearedLines = [
-  "Keypad cracked. The vault hums ominously.",
-  "Pockets full of gold. Greed level: acceptable.",
-  "Lock picked like a pro. Nobody heard a thing.",
-  "Alarm wires connected. Security is now very confused.",
-  "Door forced open. Only the final chamber remains…"
-];
+const games = [gameKeypad, gameCoins, gameGuard, gameLock, gameFake, gameWires, gameDial, gameMash];
+const T = name => `<div class="tag">Trial ${level + 1} / ${games.length} · ${name}</div>`;
 let level = 0, cleanup = null;
 
 function renderDots(){
@@ -276,11 +288,10 @@ function intro(){
   level = 0; renderDots();
   stage.innerHTML = `<div class="card center">
     <svg class="vaultArt" viewBox="0 0 170 170">${vaultSVG()}</svg>
-    <div class="tag">Top secret · Eyes only</div>
     <h1>OPERATION:<br>GOLDEN VAULT</h1>
-    <p>Deep beneath the city sits a vault nobody has ever cracked. Inside it waits the <b style="color:var(--gold2)">Legendary Prize</b>.<br>Beat all 5 security trials to claim it.</p>
-    <button class="btn" id="go">Begin the heist</button>
-    <p class="small" style="margin-top:14px">🔊 Sound on for the full experience</p>
+    <p>Beat ${games.length} trials. Open the vault. Win the <b style="color:var(--gold2)">Legendary Prize</b>.</p>
+    <button class="btn" id="go">Start</button>
+    <p class="small" style="margin-top:14px">🔊 Sound on</p>
   </div>`;
   $('#go').onclick = () => { audio(); sfx.good(); loadYT(); startLevel(); };
 }
@@ -310,9 +321,8 @@ function cleared(){
   const last = level >= games.length;
   stage.innerHTML = `<div class="card center">
     <div style="font-size:56px">✅</div>
-    <h2>Trial ${level} cleared!</h2>
-    <p>${clearedLines[level - 1]}</p>
-    <button class="btn" id="next">${last ? 'Open the vault' : 'Next trial →'}</button>
+    <h2>Trial ${level} / ${games.length} done</h2>
+    <button class="btn" id="next">${last ? 'Open the vault' : 'Next →'}</button>
   </div>`;
   $('#next').onclick = () => { sfx.blip(); last ? finale() : startLevel(); };
 }
@@ -320,8 +330,8 @@ function cleared(){
 /* ================== Trial 1: keypad memory ================== */
 function gameKeypad(root, done){
   const LEN = 6; let code = [], input = [], accepting = false, alive = true;
-  root.innerHTML = `<div class="tag">Trial 1 / 5 · Keypad</div><h2>Memorize the code</h2>
-    <p>The keypad flashes a ${LEN}-digit code, one digit at a time. Watch closely, then punch it in.</p>
+  root.innerHTML = `${T('Keypad')}<h2>Remember the code</h2>
+    <p>Watch the ${LEN} digits. Type them in.</p>
     <div class="display" id="disp"></div><div class="keypad" id="kp"></div><div class="status" id="st"></div>`;
   const disp = root.querySelector('#disp'), st = root.querySelector('#st'), kp = root.querySelector('#kp');
   ['1','2','3','4','5','6','7','8','9','⌫','0','↻'].forEach(k => {
@@ -342,7 +352,7 @@ function gameKeypad(root, done){
       disp.textContent = '·'.repeat(LEN); await wait(160);
     }
     if(!alive) return;
-    st.textContent = 'Your turn! (↻ to watch again)'; accepting = true; render();
+    st.textContent = 'Type it. (↻ = replay)'; accepting = true; render();
   }
   function back(){ if(!accepting || !input.length) return; input.pop(); render(); sfx.blip(300); }
   function press(d){
@@ -350,8 +360,8 @@ function gameKeypad(root, done){
     input.push(d); render(); sfx.blip(380 + d * 50);
     if(input.length < LEN) return;
     accepting = false;
-    if(input.join('') === code.join('')){ st.className = 'status good'; st.textContent = 'ACCESS GRANTED'; setTimeout(done, 500); }
-    else { sfx.bad(); shake(disp); st.className = 'status bad'; st.textContent = 'Wrong code! New code incoming…'; setTimeout(() => alive && showCode(true), 1100); }
+    if(input.join('') === code.join('')){ st.className = 'status good'; st.textContent = 'Correct'; setTimeout(done, 500); }
+    else { sfx.bad(); shake(disp); st.className = 'status bad'; st.textContent = 'Wrong. New code.'; setTimeout(() => alive && showCode(true), 1100); }
   }
   const onKey = e => { if(/^[0-9]$/.test(e.key)) press(+e.key); else if(e.key === 'Backspace') back(); };
   addEventListener('keydown', onKey);
@@ -362,8 +372,8 @@ function gameKeypad(root, done){
 /* ================== Trial 2: catch coins ================== */
 function gameCoins(root, done){
   const GOAL = 15;
-  root.innerHTML = `<div class="tag">Trial 2 / 5 · The loot</div><h2>Grab the gold</h2>
-    <p>Move your bag (mouse, finger or ← →). Catch ${GOAL} coins. Bombs make you drop 3!</p>
+  root.innerHTML = `${T('Coins')}<h2>Catch the coins</h2>
+    <p>Catch ${GOAL} coins. Bomb = −3.</p>
     <div class="hudline"><span>💰 <span id="cc">0</span> / ${GOAL}</span><span id="msg"></span></div>
     <canvas class="game" id="cv"></canvas>`;
   const cv = root.querySelector('#cv'), ctx = cv.getContext('2d'), cc = root.querySelector('#cc'), msg = root.querySelector('#msg');
@@ -392,7 +402,7 @@ function gameCoins(root, done){
       it.y += it.vy * dt; it.rot += dt * 4;
       if(!it.hit && it.y > H - 52 && it.y < H - 20 && Math.abs(it.x - bag.x) < bag.w/2 + it.r * .5){
         it.hit = true;
-        if(it.bomb){ score = Math.max(0, score - 3); sfx.bad(); flash = .3; msg.textContent = '💥 Ouch!'; }
+        if(it.bomb){ score = Math.max(0, score - 3); sfx.bad(); flash = .3; msg.textContent = '💥 −3'; }
         else { score++; sfx.coin(); msg.textContent = ''; }
         cc.textContent = score;
       }
@@ -438,8 +448,8 @@ function gameCoins(root, done){
 /* ================== Trial 3: lock picking ================== */
 function gameLock(root, done){
   const PINS = 3;
-  root.innerHTML = `<div class="tag">Trial 3 / 5 · The lock</div><h2>Pick the lock</h2>
-    <p>Tap (or press Space) when the needle is inside the green zone. Set all ${PINS} pins. A miss drops a pin!</p>
+  root.innerHTML = `${T('Lock')}<h2>Pick the lock</h2>
+    <p>Tap when the needle is in the green. ${PINS} hits. A miss removes one.</p>
     <div class="lockWrap">
       <svg viewBox="0 0 260 260" width="260" height="260" id="dial" style="cursor:pointer;max-width:100%;touch-action:manipulation">
         <circle cx="130" cy="130" r="118" fill="#1b2240" stroke="#f5c542" stroke-width="5"/>
@@ -469,11 +479,11 @@ function gameLock(root, done){
     if(locked) return;
     const diff = Math.abs(((angle - zc + 540) % 360) - 180);
     if(diff <= zw/2 + 3){
-      pins++; sfx.good(); st.className = 'status good'; st.textContent = 'Click!';
-      if(pins >= PINS){ pinEls.forEach(p => p.classList.add('on')); locked = true; alive = false; st.textContent = 'Lock open!'; setTimeout(done, 500); return; }
+      pins++; sfx.good(); st.className = 'status good'; st.textContent = 'Hit';
+      if(pins >= PINS){ pinEls.forEach(p => p.classList.add('on')); locked = true; alive = false; st.textContent = 'Open'; setTimeout(done, 500); return; }
       speed += 65; dir *= -1; zw = Math.max(22, zw - 7);
     } else {
-      pins = Math.max(0, pins - 1); sfx.bad(); shake(dial); st.className = 'status bad'; st.textContent = 'Miss! A pin slipped.';
+      pins = Math.max(0, pins - 1); sfx.bad(); shake(dial); st.className = 'status bad'; st.textContent = 'Miss';
     }
     pinEls.forEach((p, i) => p.classList.toggle('on', i < pins));
     newZone();
@@ -490,8 +500,8 @@ function gameWires(root, done){
   const colors = ['#ff5a6e', '#4da3ff', '#f5c542', '#3ddc97', '#b46bff'];
   const ys = [38, 94, 150, 206, 262];
   const rightOrder = shuffle([0, 1, 2, 3, 4]);
-  root.innerHTML = `<div class="tag">Trial 4 / 5 · The alarm</div><h2>Fix the wiring</h2>
-    <p>Drag each wire on the left to the plug of the same colour on the right. Careful: a wrong plug shorts the circuit and resets ALL wires!</p>
+  root.innerHTML = `${T('Wires')}<h2>Connect the wires</h2>
+    <p>Drag each wire to the same colour. Wrong plug resets all.</p>
     <svg class="wires" viewBox="0 0 400 300" id="wsvg"></svg><div class="status" id="st"></div>`;
   const svg = root.querySelector('#wsvg'), st = root.querySelector('#st');
   const NS = 'http://www.w3.org/2000/svg';
@@ -524,10 +534,10 @@ function gameWires(root, done){
     if(slot >= 0 && rightOrder[slot] === drag.i){
       drag.line.setAttribute('x2', 354); drag.line.setAttribute('y2', ys[slot]);
       connected.add(drag.i); sfx.good(); st.className = 'status good'; st.textContent = `${connected.size} / ${colors.length} connected`;
-      if(connected.size === colors.length){ st.textContent = 'Alarm disabled!'; setTimeout(done, 500); }
+      if(connected.size === colors.length){ st.textContent = 'Done'; setTimeout(done, 500); }
     } else {
       drag.line.remove();
-      if(slot >= 0){ sfx.bad(); shake(svg); lines.innerHTML = ''; connected.clear(); st.className = 'status bad'; st.textContent = '⚡ Short circuit! All wires reset.'; }
+      if(slot >= 0){ sfx.bad(); shake(svg); lines.innerHTML = ''; connected.clear(); st.className = 'status bad'; st.textContent = 'Wrong. Reset.'; }
     }
     drag = null;
   };
@@ -535,17 +545,142 @@ function gameWires(root, done){
   return () => {};
 }
 
+/* ================== Guard: red light / green light ================== */
+function gameGuard(root, done){
+  const STEPS = 14, COOLDOWN = 280;
+  root.innerHTML = `${T('Guard')}<h2>Sneak past the guard</h2>
+    <p>Tap MOVE only on green. Caught = back to start.</p>
+    <div class="guardBox"><div class="guard" id="g">👮</div><div class="light" id="lt"></div></div>
+    <div class="track"><div id="runner">🥷</div><div class="end">🔐</div></div>
+    <div class="center"><button class="btn mashBtn" id="mv">MOVE</button></div><div class="status" id="st"></div>`;
+  const g = root.querySelector('#g'), lt = root.querySelector('#lt'), runner = root.querySelector('#runner'), st = root.querySelector('#st'), mv = root.querySelector('#mv');
+  let pos = 0, state = 'r', alive = true, timer, lastMove = 0;
+  const place = () => { runner.style.left = `calc(${pos / STEPS} * (100% - 84px) + 6px)`; };
+  function set(s){
+    state = s; lt.className = 'light ' + s;
+    lt.textContent = s === 'g' ? 'GO' : s === 'y' ? 'TURNING' : 'STOP';
+    g.textContent = s === 'g' ? '😴' : s === 'y' ? '😳' : '👮';
+  }
+  function cycle(){
+    if(!alive) return;
+    if(state === 'r'){ set('g'); timer = setTimeout(cycle, 900 + Math.random() * 1500); }
+    else if(state === 'g'){ set('y'); sfx.blip(900); timer = setTimeout(cycle, 260 + Math.random() * 120); }
+    else { set('r'); timer = setTimeout(cycle, 900 + Math.random() * 1300); }
+  }
+  function move(){
+    if(!alive) return;
+    const now = performance.now(); if(now - lastMove < COOLDOWN) return; lastMove = now;
+    if(state === 'r'){
+      pos = 0; place(); sfx.bad(); shake(root.querySelector('.track')); st.className = 'status bad'; st.textContent = 'Caught. Back to start.'; return;
+    }
+    pos++; place(); sfx.blip(300 + pos * 30); st.className = 'status'; st.textContent = `${pos} / ${STEPS}`;
+    if(pos >= STEPS){ alive = false; clearTimeout(timer); st.className = 'status good'; st.textContent = 'Through'; setTimeout(done, 400); }
+  }
+  mv.addEventListener('pointerdown', e => { e.preventDefault(); move(); });
+  const onKey = e => { if(e.code === 'Space'){ e.preventDefault(); if(!e.repeat) move(); } };
+  addEventListener('keydown', onKey);
+  set('r'); place(); timer = setTimeout(cycle, 1200);
+  return () => { alive = false; clearTimeout(timer); removeEventListener('keydown', onKey); };
+}
+
+/* ================== Fake gold: odd one out ================== */
+function gameFake(root, done){
+  const rounds = [{n: 3, d: 13}, {n: 4, d: 9}, {n: 4, d: 6}, {n: 5, d: 5}];
+  const TIME = 6000;
+  root.innerHTML = `${T('Fake gold')}<h2>Find the fake bar</h2>
+    <p>One bar is a different shade. Tap it. ${rounds.length} rounds, ${TIME / 1000} s each. Wrong = restart.</p>
+    <div class="hudline"><span id="rd"></span></div><div class="timer"><div id="tm"></div></div>
+    <div class="goldGrid" id="gg"></div><div class="status" id="st"></div>`;
+  const gg = root.querySelector('#gg'), tm = root.querySelector('#tm'), rd = root.querySelector('#rd'), st = root.querySelector('#st');
+  let r = 0, fake = 0, start = 0, alive = true, raf, busy = false;
+  const bar = L => `linear-gradient(hsl(45,95%,${L + 14}%), hsl(42,85%,${L - 6}%))`;
+  function round(){
+    busy = false;
+    const {n, d} = rounds[r];
+    rd.textContent = `Round ${r + 1} / ${rounds.length}`;
+    gg.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+    fake = rand(n * n);
+    const L = 52, fL = L + (Math.random() < .5 ? d : -d);
+    gg.innerHTML = '';
+    for(let i = 0; i < n * n; i++){
+      const b = document.createElement('button'); b.className = 'gbar';
+      b.style.background = bar(i === fake ? fL : L);
+      b.addEventListener('pointerdown', e => { e.preventDefault(); pick(i); });
+      gg.appendChild(b);
+    }
+    start = performance.now();
+  }
+  function fail(msg){
+    busy = true; sfx.bad(); shake(gg); st.className = 'status bad'; st.textContent = msg;
+    if(gg.children[fake]) gg.children[fake].style.outline = '4px solid #ff5a6e';
+    setTimeout(() => { if(!alive) return; r = 0; st.textContent = ''; round(); }, 1100);
+  }
+  function pick(i){
+    if(busy || !alive) return;
+    if(i !== fake) return fail('Wrong. Restart.');
+    sfx.good(); r++;
+    if(r >= rounds.length){ alive = false; st.className = 'status good'; st.textContent = 'Found all'; setTimeout(done, 400); return; }
+    round();
+  }
+  function loop(now){
+    if(!alive) return;
+    if(!busy){
+      const left = Math.max(0, 1 - (now - start) / TIME);
+      tm.style.width = left * 100 + '%';
+      if(left <= 0) fail('Time up. Restart.');
+    }
+    raf = requestAnimationFrame(loop);
+  }
+  round(); raf = requestAnimationFrame(loop);
+  return () => { alive = false; cancelAnimationFrame(raf); };
+}
+
+/* ================== Safe dial: find the numbers ================== */
+function gameDial(root, done){
+  const NUMS = 3, TOL = 1, HOLD = 1000;
+  root.innerHTML = `${T('Safe dial')}<h2>Find the combination</h2>
+    <p>Slide until the signal is full and green. Hold still for 1 s. ${NUMS} numbers.</p>
+    <div class="display" id="num">00</div>
+    <div class="small">Signal</div><div class="sig"><div id="sig"></div></div>
+    <input type="range" class="dialr" id="sl" min="0" max="99" value="50">
+    <div class="display" id="combo" style="font-size:26px;letter-spacing:4px;color:var(--gold2);text-shadow:none"></div><div class="status" id="st"></div>`;
+  const num = root.querySelector('#num'), sig = root.querySelector('#sig'), sl = root.querySelector('#sl'), combo = root.querySelector('#combo'), st = root.querySelector('#st');
+  const found = []; let target = 0, held = 0, alive = true, raf, last = performance.now(), prev = 50;
+  const newTarget = () => { do { target = 3 + rand(94); } while(Math.abs(target - +sl.value) < 20); held = 0; };
+  const showCombo = () => { combo.textContent = Array.from({length: NUMS}, (_, i) => found[i] !== undefined ? String(found[i]).padStart(2, '0') : '__').join(' - '); };
+  sl.addEventListener('input', () => { const v = +sl.value; if(v !== prev){ sfx.tick(); prev = v; } });
+  function loop(now){
+    if(!alive) return;
+    const dt = now - last; last = now;
+    const v = +sl.value, d = Math.abs(v - target);
+    num.textContent = String(v).padStart(2, '0');
+    sig.style.width = (d <= TOL ? 100 : Math.max(0, 100 - d * 8)) + '%';
+    sig.style.background = d <= TOL ? 'var(--good)' : '#4da3ff';
+    if(d <= TOL){
+      held += dt; st.className = 'status good'; st.textContent = 'Hold…';
+      if(held >= HOLD){
+        found.push(v); sfx.good(); showCombo();
+        if(found.length >= NUMS){ alive = false; st.textContent = 'Open'; setTimeout(done, 400); return; }
+        st.textContent = ''; newTarget();
+      }
+    } else { held = 0; if(st.textContent === 'Hold…') st.textContent = ''; }
+    raf = requestAnimationFrame(loop);
+  }
+  newTarget(); showCombo(); raf = requestAnimationFrame(loop);
+  return () => { alive = false; cancelAnimationFrame(raf); };
+}
+
 /* ================== Trial 5: force the door ================== */
 function gameMash(root, done){
-  root.innerHTML = `<div class="tag">Trial 5 / 5 · The door</div><h2>Force it open!</h2>
-    <p>The door is heavy and keeps sliding shut. Tap PUSH (or Space) as fast as you can!</p>
+  root.innerHTML = `${T('Door')}<h2>Open the door</h2>
+    <p>Tap PUSH fast. Don't stop.</p>
     <div class="meter"><div id="fill"></div></div>
     <div class="center"><button class="btn mashBtn" id="push">PUSH!</button></div><div class="status" id="st"></div>`;
   const fill = root.querySelector('#fill'), push = root.querySelector('#push'), st = root.querySelector('#st');
   let v = 0, alive = true, raf, last = performance.now(), t0 = performance.now();
-  const lines = ['Come on!', 'It\'s moving!', 'Harder!!', 'ALMOST!!!'];
+  const lines = ['', '', '', 'Almost'];
   function bump(){ if(!alive) return; v = Math.min(100, v + 8); sfx.blip(200 + v * 6); if(v >= 100) win(); }
-  function win(){ alive = false; cancelAnimationFrame(raf); fill.style.width = '100%'; sfx.boom(); st.className = 'status good'; st.textContent = 'THE DOOR IS OPEN!'; setTimeout(done, 600); }
+  function win(){ alive = false; cancelAnimationFrame(raf); fill.style.width = '100%'; sfx.boom(); st.className = 'status good'; st.textContent = 'Open'; setTimeout(done, 600); }
   function loop(now){
     if(!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
@@ -573,7 +708,7 @@ async function finale(){
   </div>`;
   const log = $('#log'), pb = $('#pb'), pct = $('#pct');
   const say = async (t, ms = 700) => { log.textContent += '> ' + t + '\n'; sfx.tick(); await wait(ms); };
-  await say('All 5 trials verified ✔');
+  await say(`All ${games.length} trials verified ✔`);
   await say('Releasing vault bolts…');
   await say('Decrypting the Legendary Prize…', 300);
   for(let p = 0; p <= 99; p += 1 + rand(3)){ pb.style.width = p + '%'; pct.textContent = p + '%'; if(p % 9 === 0) sfx.tick(); await wait(45); }
