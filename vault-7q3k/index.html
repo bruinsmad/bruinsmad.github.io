@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Operation Golden Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1020;--panel:#141b33;--line:#26305a;--gold:#f5c542;--gold2:#ffdf7e;--ink:#e8ecff;--muted:#8a93b8;--good:#3ddc97;--bad:#ff5a6e;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:radial-gradient(1200px 600px at 50% -10%,#1d2750,var(--bg)) fixed;color:var(--ink);font-family:Inter,system-ui,sans-serif}
+body{display:flex;justify-content:center;padding:max(12px,env(safe-area-inset-top)) 12px max(16px,env(safe-area-inset-bottom));min-height:100vh;min-height:100dvh;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+button{touch-action:manipulation}
+@media (max-width:420px){.card{padding:16px}.key{padding:12px 0}.display{font-size:32px;letter-spacing:8px}.mashBtn{width:150px;height:150px}}
+#app{width:100%;max-width:560px}
+header{display:flex;justify-content:space-between;align-items:center;margin:4px 0 14px}
+.logo{font-family:Bungee;color:var(--gold);font-size:16px;letter-spacing:1px}
+.dots{display:flex;gap:7px}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid #3a4475;transition:.3s}
+.dot.done{background:var(--gold);border-color:var(--gold)}
+.dot.now{border-color:var(--gold);box-shadow:0 0 10px var(--gold)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.45);animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+h1,h2{font-family:Bungee;font-weight:400;margin:0 0 8px;color:var(--gold)}
+h1{font-size:clamp(28px,8vw,40px);line-height:1.05}
+h2{font-size:22px}
+p{color:#c5cbe8;line-height:1.5;margin:6px 0 14px}
+.tag{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.btn{font-family:Bungee;font-size:18px;background:linear-gradient(#ffd75e,#e9a91c);color:#2a1a00;border:none;border-radius:12px;padding:14px 24px;cursor:pointer;box-shadow:0 5px 0 #a8730c;user-select:none}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8730c}
+.center{text-align:center}
+.small{font-size:13px;color:var(--muted)}
+.status{min-height:24px;margin-top:12px;font-weight:600;text-align:center}
+.status.good{color:var(--good)} .status.bad{color:var(--bad)}
+.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+/* vault art */
+.vaultArt{width:170px;height:170px;margin:6px auto 12px;display:block}
+.wheel{transform-origin:85px 85px;transform-box:view-box}
+.spin .wheel{animation:spin 1.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* keypad */
+.display{font-family:Bungee;font-size:40px;letter-spacing:12px;text-align:center;background:#070b18;border:2px solid var(--line);border-radius:12px;padding:14px 0 10px;color:var(--good);text-shadow:0 0 12px rgba(61,220,151,.6);margin:6px 0 14px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto}
+.key{font-family:Bungee;font-size:24px;padding:14px 0;border-radius:12px;border:1px solid #33407a;background:#1c2546;color:var(--ink);cursor:pointer;user-select:none}
+.key:active{background:#2a3666}
+/* canvas */
+canvas.game{display:block;width:100%;border-radius:14px;background:#070b18;border:2px solid var(--line);touch-action:none}
+.hudline{display:flex;justify-content:space-between;font-weight:800;margin:6px 0 10px;color:var(--gold2)}
+/* lock */
+.lockWrap{display:flex;flex-direction:column;align-items:center}
+.pins{display:flex;gap:10px;margin:8px 0}
+.pin{width:18px;height:38px;border-radius:6px;background:#26305a;transition:.25s}
+.pin.on{background:var(--good);box-shadow:0 0 10px var(--good)}
+/* wires */
+svg.wires{width:100%;display:block;background:#070b18;border:2px solid var(--line);border-radius:14px;touch-action:none}
+/* mash */
+.meter{height:30px;border-radius:15px;background:#070b18;border:2px solid var(--line);overflow:hidden;margin:10px 0 18px}
+.meter > div{height:100%;width:0;background:linear-gradient(90deg,#e9a91c,#ffdf7e);transition:width .05s linear}
+.mashBtn{width:170px;height:170px;border-radius:50%;font-size:26px}
+.bar{height:16px;border-radius:8px;background:#070b18;border:1px solid var(--line);overflow:hidden;margin:12px 0}
+.bar > div{height:100%;width:0;background:var(--gold)}
+.log{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--good);min-height:110px;text-align:left;white-space:pre-line}
+
+/* ============== KRISSED ============== */
+#kris{position:fixed;inset:0;display:none;overflow:hidden auto;z-index:50}
+#kris::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 50% 35%,#ff6ec7,#9b2cff 55%,#2b0057);animation:hue 4s linear infinite}
+#kris.show{display:block}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:60}
+#flash.go{animation:flash .6s ease-out}
+@keyframes flash{0%{opacity:1}100%{opacity:0}}
+.beams{position:absolute;left:50%;top:70px;width:220vmax;height:220vmax;transform:translate(-50%,-50%);background:repeating-conic-gradient(rgba(255,255,255,.16) 0 8deg,transparent 8deg 24deg);animation:spin 9s linear infinite;border-radius:50%}
+.ball{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:110px;height:110px;z-index:2}
+.ball svg{animation:spin 3s linear infinite;width:100%;height:100%}
+.krisInner{position:relative;z-index:3;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(80px,14vh,125px) 12px max(20px,env(safe-area-inset-bottom));text-align:center}
+.yjg{font-family:Bungee;color:#fff;font-size:clamp(18px,5vw,30px);text-shadow:3px 3px 0 #ff2d95}
+.vidWrap{position:relative;width:min(94vw,680px);width:min(94vw,680px,calc((100dvh - 330px) * 16 / 9));min-width:min(94vw,280px);aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;border:4px solid #fff;box-shadow:0 0 0 6px #ff2d95,0 20px 40px rgba(0,0,0,.5);display:none}
+.vidWrap iframe,.vidWrap #ytbox{position:absolute;inset:0;width:100%;height:100%;border:0}
+#kris.video .vidWrap{display:block}
+#kris.video .dancer{display:none}
+#soundTap{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;display:none;font-family:Bungee;font-size:15px;background:#fff;color:#ff2d95;border:none;border-radius:999px;padding:10px 16px;box-shadow:0 4px 0 #ff2d95;animation:bounce .48s ease-in-out infinite alternate}
+.big{font-family:Bungee;font-size:clamp(46px,15vw,110px);line-height:1;margin:2px 0 6px;color:#fff;text-shadow:5px 5px 0 #ff2d95,10px 10px 0 #2b0057}
+.big span{display:inline-block;animation:bounce .48s ease-in-out infinite alternate}
+@keyframes bounce{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-14px) rotate(3deg)}}
+.dancer{height:min(42vh,340px);width:auto;flex:0 1 auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.4))}
+.dancer *{transform-box:view-box}
+.dancer .bod{transform-origin:100px 290px;animation:sway .484s ease-in-out infinite alternate}
+.dancer .armL{transform-origin:82px 112px;animation:armL .968s ease-in-out infinite}
+.dancer .armR{transform-origin:118px 112px;animation:armR .968s ease-in-out infinite}
+.dancer .head{transform-origin:100px 100px;animation:nod .484s ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-6deg) translateX(-6px)}to{transform:rotate(6deg) translateX(6px)}}
+@keyframes armL{0%,100%{transform:rotate(0)}50%{transform:rotate(-70deg)}}
+@keyframes armR{0%,100%{transform:rotate(-60deg)}50%{transform:rotate(15deg)}}
+@keyframes nod{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+.sub{color:#fff;font-weight:800;font-size:clamp(14px,3.6vw,18px);text-shadow:0 2px 6px rgba(0,0,0,.4);margin:8px 0 14px}
+.krisBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.krisBtns .btn{background:#fff;color:#9b2cff;box-shadow:0 5px 0 #ff2d95;font-size:15px;padding:12px 18px}
+#confetti{position:fixed;inset:0;z-index:2;pointer-events:none}
+@media (max-height:520px) and (orientation:landscape){
+  .ball{width:60px;height:60px;left:auto;right:16px;transform:none}
+  .krisInner{padding-top:10px}
+  .yjg{font-size:16px}
+  .big{font-size:44px;margin:0 0 6px}
+  .vidWrap{width:min(80vw,calc((100dvh - 150px) * 16 / 9));min-width:240px}
+  .dancer{height:calc(100dvh - 160px)}
+  .sub{margin:6px 0 8px;font-size:13px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><div class="logo">🔐 GOLDEN VAULT</div><div class="dots" id="dots"></div></header>
+  <main id="stage"></main>
+</div>
+
+<div id="kris">
+  <div class="beams"></div>
+  <div class="ball"><svg viewBox="0 0 100 100"><defs><radialGradient id="bg" cx="35%" cy="30%"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#c9c9e0"/><stop offset="1" stop-color="#6b6b8a"/></radialGradient><clipPath id="bc"><circle cx="50" cy="50" r="46"/></clipPath></defs><circle cx="50" cy="50" r="46" fill="url(#bg)"/><g clip-path="url(#bc)" stroke="#555" stroke-width="1.2" opacity=".55"><path d="M0 20H100M0 35H100M0 50H100M0 65H100M0 80H100M20 0V100M35 0V100M50 0V100M65 0V100M80 0V100"/></g><circle cx="34" cy="30" r="6" fill="#fff"/></svg></div>
+  <canvas id="confetti"></canvas>
+  <div class="krisInner">
+    <div class="yjg">YOU JUST GOT</div>
+    <div class="big" id="bigword"></div>
+    <div class="vidWrap"><div id="ytbox"></div><button id="soundTap">🔊 Tap for sound</button></div>
+    <svg class="dancer" viewBox="0 0 200 300" aria-label="A dancing disco diva">
+      <defs>
+        <linearGradient id="dress" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#ffd1ec"/><stop offset=".6" stop-color="#ff63b8"/><stop offset="1" stop-color="#fff2a8"/></linearGradient>
+        <pattern id="sparkle" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="url(#dress)"/><circle cx="3" cy="3" r="1.4" fill="#fff"/><circle cx="9" cy="9" r="1" fill="#fff8"/></pattern>
+      </defs>
+      <g class="bod">
+        <!-- legs -->
+        <path d="M88 215 L80 282" stroke="#f1c7a8" stroke-width="9" stroke-linecap="round"/>
+        <path d="M112 215 L122 282" stroke="#f1c7a8" stroke-width="9" stroke-linecap="round"/>
+        <path d="M70 286 h18 M114 286 h20" stroke="#222" stroke-width="9" stroke-linecap="round"/>
+        <!-- arms -->
+        <g class="armL"><path d="M82 112 L50 140 L36 120" fill="none" stroke="#f1c7a8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="35" cy="117" r="7" fill="#f1c7a8"/></g>
+        <g class="armR"><path d="M118 112 L150 140 L164 120" fill="none" stroke="#f1c7a8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="165" cy="117" r="7" fill="#f1c7a8"/></g>
+        <!-- dress -->
+        <path d="M80 106 Q100 98 120 106 L136 222 Q100 232 64 222 Z" fill="url(#sparkle)" stroke="#fff" stroke-width="2"/>
+        <path d="M76 160 Q100 168 124 160" stroke="#ff2d95" stroke-width="5" fill="none"/>
+        <!-- head -->
+        <g class="head">
+          <rect x="94" y="88" width="12" height="16" fill="#f1c7a8"/>
+          <path d="M70 70 Q66 30 100 28 Q134 30 130 70 L132 92 Q118 96 116 80 L84 80 Q82 96 68 92 Z" fill="#2a1a12"/>
+          <circle cx="100" cy="66" r="22" fill="#f6d2b6"/>
+          <path d="M78 58 Q90 40 122 54 Q118 42 100 40 Q80 42 78 58Z" fill="#2a1a12"/>
+          <rect x="82" y="58" width="16" height="10" rx="4" fill="#111"/><rect x="102" y="58" width="16" height="10" rx="4" fill="#111"/><path d="M98 62 h4" stroke="#111" stroke-width="2"/>
+          <path d="M92 77 Q100 83 108 77" stroke="#d81b60" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <circle cx="78" cy="74" r="3" fill="#fff6b0"/><circle cx="122" cy="74" r="3" fill="#fff6b0"/>
+        </g>
+      </g>
+    </svg>
+    <div class="sub">Send this to your friends to totally Kris them! 💅</div>
+    <div class="krisBtns"><button class="btn" id="againBtn">🔁 Play again</button><button class="btn" id="muteBtn">🔇 Mute</button></div>
+  </div>
+</div>
+<div id="flash"></div>
+
+<script>
+/* ================== CONFIG: the Krissed video ==================
+   Paste YouTube links or IDs here. If one can't be embedded, the next is tried.
+   start = seconds into the video. If none work (or YouTube is blocked),
+   the game falls back to the built-in disco dancer + music. */
+const KRIS_VIDEOS = [
+  { id: 'UMMpicSPL-E', start: 0 },
+  { id: 'kPy-liHYNoc', start: 0 },
+  { id: 'Lj_BmHnR9p0', start: 0 },
+];
+
+/* ================== helpers ================== */
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const rand = n => Math.floor(Math.random() * n);
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function shake(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+/* ================== audio ================== */
+let AC = null, master = null, noiseBuf = null, muted = false;
+function audio(){
+  try{
+    if(!AC){
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      master = AC.createGain(); master.gain.value = 0.45; master.connect(AC.destination);
+      noiseBuf = AC.createBuffer(1, AC.sampleRate * 0.5, AC.sampleRate);
+      const d = noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+    }
+    if(AC.state === 'suspended') AC.resume();
+  }catch(e){}
+  return AC;
+}
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+function toneAt(f, t, dur, type='square', vol=.12){
+  if(!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t + dur + .03);
+}
+function noiseAt(t, dur, vol=.1, hp=6000){
+  if(!AC) return;
+  const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = hp;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + dur + .02);
+}
+function kickAt(t){
+  if(!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(40, t + .14);
+  g.gain.setValueAtTime(.7, t); g.gain.exponentialRampToValueAtTime(0.0001, t + .18);
+  o.connect(g).connect(master); o.start(t); o.stop(t + .2);
+}
+const sfx = {
+  blip(f=660){ if(audio()) toneAt(f, AC.currentTime, .09, 'square', .08); },
+  good(){ if(!audio()) return; const t = AC.currentTime; [72,76,79,84].forEach((m,i)=>toneAt(mtof(m), t+i*.07, .15, 'square', .09)); },
+  bad(){ if(!audio()) return; const t = AC.currentTime; toneAt(140, t, .25, 'sawtooth', .12); toneAt(110, t+.08, .25, 'sawtooth', .1); },
+  coin(){ if(!audio()) return; const t = AC.currentTime; toneAt(mtof(88), t, .06, 'square', .07); toneAt(mtof(93), t+.05, .12, 'square', .07); },
+  boom(){ if(!audio()) return; const t = AC.currentTime; noiseAt(t, .4, .3, 200); kickAt(t); },
+  tick(){ if(audio()) toneAt(1200, AC.currentTime, .03, 'square', .05); },
+  win(){ if(!audio()) return; const t = AC.currentTime; [60,64,67,72,76,79,84].forEach((m,i)=>toneAt(mtof(m), t+i*.08, .25, 'square', .08)); }
+};
+
+/* original disco loop — Am F C G */
+const BPM = 124, STEP = 60 / BPM / 4;
+const bassRoots = [45, 41, 48, 43];
+const stabs = [[57,60,64],[53,57,60],[55,60,64],[55,59,62]];
+const _ = null;
+const melody = [
+  76,_,76,_,72,_,74,76, _,_,81,_,79,_,76,_,
+  77,_,77,_,76,_,72,_, 69,_,72,_,74,_,_,_,
+  76,_,76,_,72,_,74,76, _,_,79,_,84,_,79,_,
+  79,_,77,_,76,_,74,_, 71,_,74,_,76,_,_,_
+];
+let musicTimer = null, nextTime = 0, step = 0;
+function scheduleStep(s, t){
+  const bar = Math.floor(s / 16), pos = s % 16, root = bassRoots[bar];
+  if(pos % 4 === 0) kickAt(t);
+  if(pos % 4 === 2) noiseAt(t, .12, .09, 7000);
+  if(pos % 4 !== 2) noiseAt(t, .03, .04, 9000);
+  if(pos === 4 || pos === 12) noiseAt(t, .18, .16, 1500);
+  if(pos % 2 === 0) toneAt(mtof(root + (pos % 4 === 0 ? 0 : 12)), t, STEP * 1.7, 'sawtooth', .11);
+  if(pos % 4 === 2) stabs[bar].forEach(m => toneAt(mtof(m), t, STEP * 1.5, 'triangle', .05));
+  const m = melody[s]; if(m) toneAt(mtof(m), t, STEP * 1.8, 'square', .07);
+}
+function startMusic(){
+  if(!audio() || musicTimer) return;
+  step = 0; nextTime = AC.currentTime + .08;
+  musicTimer = setInterval(() => {
+    while(nextTime < AC.currentTime + .15){ scheduleStep(step, nextTime); nextTime += STEP; step = (step + 1) % 64; }
+  }, 25);
+}
+function stopMusic(){ clearInterval(musicTimer); musicTimer = null; }
+
+/* ================== flow ================== */
+const games = [gameKeypad, gameCoins, gameLock, gameWires, gameMash];
+const clearedLines = [
+  "Keypad cracked. The vault hums ominously.",
+  "Pockets full of gold. Greed level: acceptable.",
+  "Lock picked like a pro. Nobody heard a thing.",
+  "Alarm wires connected. Security is now very confused.",
+  "Door forced open. Only the final chamber remains…"
+];
+let level = 0, cleanup = null;
+
+function renderDots(){
+  $('#dots').innerHTML = games.map((_, i) => `<div class="dot ${i < level ? 'done' : i === level ? 'now' : ''}"></div>`).join('');
+}
+
+function intro(){
+  level = 0; renderDots();
+  stage.innerHTML = `<div class="card center">
+    <svg class="vaultArt" viewBox="0 0 170 170">${vaultSVG()}</svg>
+    <div class="tag">Top secret · Eyes only</div>
+    <h1>OPERATION:<br>GOLDEN VAULT</h1>
+    <p>Deep beneath the city sits a vault nobody has ever cracked. Inside it waits the <b style="color:var(--gold2)">Legendary Prize</b>.<br>Beat all 5 security trials to claim it.</p>
+    <button class="btn" id="go">Begin the heist</button>
+    <p class="small" style="margin-top:14px">🔊 Sound on for the full experience</p>
+  </div>`;
+  $('#go').onclick = () => { audio(); sfx.good(); loadYT(); startLevel(); };
+}
+
+function vaultSVG(){
+  return `<circle cx="85" cy="85" r="80" fill="#2a3358" stroke="#f5c542" stroke-width="5"/>
+  <circle cx="85" cy="85" r="62" fill="#1b2240" stroke="#3a4475" stroke-width="3"/>
+  <g class="wheel"><circle cx="85" cy="85" r="18" fill="#f5c542"/>
+  ${[0,60,120,180,240,300].map(a=>`<rect x="81" y="35" width="8" height="40" rx="4" fill="#f5c542" transform="rotate(${a} 85 85)"/>`).join('')}
+  <circle cx="85" cy="85" r="8" fill="#a8730c"/></g>
+  ${[0,90,180,270].map(a=>`<circle cx="85" cy="12" r="5" fill="#f5c542" transform="rotate(${a+45} 85 85)"/>`).join('')}`;
+}
+
+function startLevel(){
+  renderDots();
+  stage.innerHTML = `<div class="card" id="gcard"></div>`;
+  const root = $('#gcard');
+  cleanup = games[level](root, () => {
+    if(cleanup) { cleanup(); cleanup = null; }
+    sfx.win();
+    level++; renderDots();
+    setTimeout(cleared, 500);
+  });
+}
+
+function cleared(){
+  const last = level >= games.length;
+  stage.innerHTML = `<div class="card center">
+    <div style="font-size:56px">✅</div>
+    <h2>Trial ${level} cleared!</h2>
+    <p>${clearedLines[level - 1]}</p>
+    <button class="btn" id="next">${last ? 'Open the vault' : 'Next trial →'}</button>
+  </div>`;
+  $('#next').onclick = () => { sfx.blip(); last ? finale() : startLevel(); };
+}
+
+/* ================== Trial 1: keypad memory ================== */
+function gameKeypad(root, done){
+  const LEN = 5; let code = [], input = [], accepting = false, alive = true;
+  root.innerHTML = `<div class="tag">Trial 1 / 5 · Keypad</div><h2>Memorize the code</h2>
+    <p>The keypad flashes a ${LEN}-digit code, one digit at a time. Watch closely, then punch it in.</p>
+    <div class="display" id="disp"></div><div class="keypad" id="kp"></div><div class="status" id="st"></div>`;
+  const disp = root.querySelector('#disp'), st = root.querySelector('#st'), kp = root.querySelector('#kp');
+  ['1','2','3','4','5','6','7','8','9','⌫','0','↻'].forEach(k => {
+    const b = document.createElement('button'); b.className = 'key'; b.textContent = k;
+    b.onclick = () => k === '⌫' ? back() : k === '↻' ? (accepting && showCode(false)) : press(+k);
+    kp.appendChild(b);
+  });
+  const render = () => { disp.textContent = input.join('') + '_'.repeat(LEN - input.length); };
+  async function showCode(fresh = true){
+    accepting = false; input = [];
+    if(fresh) code = Array.from({length: LEN}, () => rand(10));
+    st.className = 'status'; st.textContent = 'Watch…';
+    disp.textContent = '·'.repeat(LEN); await wait(600);
+    for(let i = 0; i < LEN; i++){
+      if(!alive) return;
+      disp.textContent = code.map((d, j) => j === i ? d : '·').join('');
+      sfx.blip(380 + code[i] * 50); await wait(700);
+      disp.textContent = '·'.repeat(LEN); await wait(160);
+    }
+    if(!alive) return;
+    st.textContent = 'Your turn! (↻ to watch again)'; accepting = true; render();
+  }
+  function back(){ if(!accepting || !input.length) return; input.pop(); render(); sfx.blip(300); }
+  function press(d){
+    if(!accepting) return;
+    input.push(d); render(); sfx.blip(380 + d * 50);
+    if(input.length < LEN) return;
+    accepting = false;
+    if(input.join('') === code.join('')){ st.className = 'status good'; st.textContent = 'ACCESS GRANTED'; setTimeout(done, 500); }
+    else { sfx.bad(); shake(disp); st.className = 'status bad'; st.textContent = 'Wrong code! New code incoming…'; setTimeout(() => alive && showCode(true), 1100); }
+  }
+  const onKey = e => { if(/^[0-9]$/.test(e.key)) press(+e.key); else if(e.key === 'Backspace') back(); };
+  addEventListener('keydown', onKey);
+  showCode();
+  return () => { alive = false; removeEventListener('keydown', onKey); };
+}
+
+/* ================== Trial 2: catch coins ================== */
+function gameCoins(root, done){
+  const GOAL = 12;
+  root.innerHTML = `<div class="tag">Trial 2 / 5 · The loot</div><h2>Grab the gold</h2>
+    <p>Move your bag (mouse, finger or ← →). Catch ${GOAL} coins. Bombs make you drop 3!</p>
+    <div class="hudline"><span>💰 <span id="cc">0</span> / ${GOAL}</span><span id="msg"></span></div>
+    <canvas class="game" id="cv"></canvas>`;
+  const cv = root.querySelector('#cv'), ctx = cv.getContext('2d'), cc = root.querySelector('#cc'), msg = root.querySelector('#msg');
+  const W = 480, H = 400, dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
+  const bag = {x: W/2, w: 84}; let items = [], score = 0, last = performance.now(), spawn = 0, raf, alive = true, flash = 0;
+  const keys = {};
+  const toX = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * W; };
+  const onMove = e => { bag.x = toX(e); };
+  cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerdown', onMove);
+  const kd = e => { keys[e.key] = true; if(e.key.startsWith('Arrow')) e.preventDefault(); }, ku = e => { keys[e.key] = false; };
+  addEventListener('keydown', kd); addEventListener('keyup', ku);
+
+  function loop(now){
+    if(!alive) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if(keys.ArrowLeft) bag.x -= 420 * dt; if(keys.ArrowRight) bag.x += 420 * dt;
+    bag.x = Math.max(bag.w/2, Math.min(W - bag.w/2, bag.x));
+    spawn -= dt;
+    if(spawn <= 0){
+      const bomb = Math.random() < .3;
+      items.push({x: 20 + Math.random() * (W - 40), y: -20, vy: 140 + score * 12 + Math.random() * 60, bomb, r: bomb ? 15 : 13, rot: Math.random()*6});
+      spawn = .55 - Math.min(.25, score * .02);
+    }
+    for(const it of items){
+      it.y += it.vy * dt; it.rot += dt * 4;
+      if(!it.hit && it.y > H - 52 && it.y < H - 20 && Math.abs(it.x - bag.x) < bag.w/2 + it.r * .5){
+        it.hit = true;
+        if(it.bomb){ score = Math.max(0, score - 3); sfx.bad(); flash = .3; msg.textContent = '💥 Ouch!'; }
+        else { score++; sfx.coin(); msg.textContent = ''; }
+        cc.textContent = score;
+      }
+    }
+    items = items.filter(it => !it.hit && it.y < H + 30);
+    draw();
+    if(score >= GOAL){ alive = false; setTimeout(done, 300); return; }
+    raf = requestAnimationFrame(loop);
+  }
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#070b18'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#141b33'; ctx.lineWidth = 1;
+    for(let x = 0; x < W; x += 40){ ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for(const it of items){
+      ctx.save(); ctx.translate(it.x, it.y);
+      if(it.bomb){
+        ctx.fillStyle = '#222838'; ctx.beginPath(); ctx.arc(0, 0, it.r, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#ff5a6e'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = '#c9a36b'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(4, -it.r); ctx.quadraticCurveTo(10, -it.r - 8, 14, -it.r - 6); ctx.stroke();
+        ctx.fillStyle = Math.random() < .5 ? '#ffdf7e' : '#ff5a6e'; ctx.beginPath(); ctx.arc(15, -it.r - 7, 4, 0, 7); ctx.fill();
+      } else {
+        const sx = Math.abs(Math.cos(it.rot));
+        ctx.scale(Math.max(.25, sx), 1);
+        ctx.fillStyle = '#f5c542'; ctx.beginPath(); ctx.arc(0, 0, it.r, 0, 7); ctx.fill();
+        ctx.strokeStyle = '#a8730c'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#a8730c'; ctx.font = 'bold 14px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', 0, 1);
+      }
+      ctx.restore();
+    }
+    // bag
+    const bx = bag.x - bag.w/2, by = H - 46;
+    ctx.fillStyle = '#7a5a2a'; ctx.beginPath();
+    ctx.moveTo(bx + 6, by); ctx.lineTo(bx + bag.w - 6, by); ctx.lineTo(bx + bag.w, by + 36); ctx.lineTo(bx, by + 36); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#f5c542'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#f5c542'; ctx.font = 'bold 18px Inter'; ctx.textAlign = 'center'; ctx.fillText('$', bag.x, by + 25);
+    if(flash > 0){ ctx.fillStyle = `rgba(255,90,110,${flash})`; ctx.fillRect(0, 0, W, H); flash -= .02; }
+  }
+  raf = requestAnimationFrame(loop);
+  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', kd); removeEventListener('keyup', ku); };
+}
+
+/* ================== Trial 3: lock picking ================== */
+function gameLock(root, done){
+  const PINS = 3;
+  root.innerHTML = `<div class="tag">Trial 3 / 5 · The lock</div><h2>Pick the lock</h2>
+    <p>Tap (or press Space) when the needle is inside the green zone. Set all ${PINS} pins. A miss drops a pin!</p>
+    <div class="lockWrap">
+      <svg viewBox="0 0 260 260" width="260" height="260" id="dial" style="cursor:pointer;max-width:100%;touch-action:manipulation">
+        <circle cx="130" cy="130" r="118" fill="#1b2240" stroke="#f5c542" stroke-width="5"/>
+        <circle cx="130" cy="130" r="100" fill="none" stroke="#26305a" stroke-width="18"/>
+        <path id="zone" fill="none" stroke="#3ddc97" stroke-width="18" stroke-linecap="butt"/>
+        <line id="needle" x1="130" y1="130" x2="130" y2="22" stroke="#ff5a6e" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="130" cy="130" r="14" fill="#f5c542"/>
+      </svg>
+      <div class="pins" id="pins">${'<div class="pin"></div>'.repeat(PINS)}</div>
+    </div><div class="status" id="st"></div>`;
+  const dial = root.querySelector('#dial'), zone = root.querySelector('#zone'), needle = root.querySelector('#needle'), st = root.querySelector('#st');
+  const pinEls = [...root.querySelectorAll('.pin')];
+  let angle = 0, speed = 130, dir = 1, pins = 0, zc = 0, zw = 46, alive = true, raf, last = performance.now(), locked = false;
+  const P = a => { const r = a * Math.PI / 180; return `${130 + 100 * Math.sin(r)} ${130 - 100 * Math.cos(r)}`; };
+  function newZone(){
+    do { zc = rand(360); } while(Math.abs(((zc - angle + 540) % 360) - 180) < 80);
+    zone.setAttribute('d', `M ${P(zc - zw/2)} A 100 100 0 0 1 ${P(zc + zw/2)}`);
+  }
+  function loop(now){
+    if(!alive) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    angle = (angle + dir * speed * dt + 360) % 360;
+    needle.setAttribute('transform', `rotate(${angle} 130 130)`);
+    raf = requestAnimationFrame(loop);
+  }
+  function hit(){
+    if(locked) return;
+    const diff = Math.abs(((angle - zc + 540) % 360) - 180);
+    if(diff <= zw/2 + 3){
+      pins++; sfx.good(); st.className = 'status good'; st.textContent = 'Click!';
+      if(pins >= PINS){ pinEls.forEach(p => p.classList.add('on')); locked = true; alive = false; st.textContent = 'Lock open!'; setTimeout(done, 500); return; }
+      speed += 55; dir *= -1; zw = Math.max(26, zw - 8);
+    } else {
+      pins = Math.max(0, pins - 1); sfx.bad(); shake(dial); st.className = 'status bad'; st.textContent = 'Miss! A pin slipped.';
+    }
+    pinEls.forEach((p, i) => p.classList.toggle('on', i < pins));
+    newZone();
+  }
+  dial.addEventListener('pointerdown', hit);
+  const onKey = e => { if(e.code === 'Space' || e.key === 'Enter'){ e.preventDefault(); if(!e.repeat) hit(); } };
+  addEventListener('keydown', onKey);
+  newZone(); raf = requestAnimationFrame(loop);
+  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', onKey); };
+}
+
+/* ================== Trial 4: wires ================== */
+function gameWires(root, done){
+  const colors = ['#ff5a6e', '#4da3ff', '#f5c542', '#3ddc97'];
+  const ys = [50, 115, 180, 245];
+  const rightOrder = shuffle([0, 1, 2, 3]);
+  root.innerHTML = `<div class="tag">Trial 4 / 5 · The alarm</div><h2>Fix the wiring</h2>
+    <p>Drag each wire on the left to the plug of the same colour on the right.</p>
+    <svg class="wires" viewBox="0 0 400 300" id="wsvg"></svg><div class="status" id="st"></div>`;
+  const svg = root.querySelector('#wsvg'), st = root.querySelector('#st');
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs) => { const el = document.createElementNS(NS, tag); for(const k in attrs) el.setAttribute(k, attrs[k]); return el; };
+  const lines = mk('g', {}); svg.appendChild(lines);
+  const connected = new Set();
+  colors.forEach((c, i) => {
+    svg.appendChild(mk('rect', {x: 0, y: ys[i] - 8, width: 40, height: 16, fill: c, rx: 3}));
+    svg.appendChild(mk('circle', {cx: 46, cy: ys[i], r: 14, fill: c, stroke: '#fff', 'stroke-width': 3, 'data-l': i, style: 'cursor:grab'}));
+  });
+  rightOrder.forEach((ci, slot) => {
+    svg.appendChild(mk('rect', {x: 360, y: ys[slot] - 8, width: 40, height: 16, fill: colors[ci], rx: 3}));
+    svg.appendChild(mk('circle', {cx: 354, cy: ys[slot], r: 14, fill: '#070b18', stroke: colors[ci], 'stroke-width': 4}));
+  });
+  let drag = null;
+  const pt = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  svg.addEventListener('pointerdown', e => {
+    const l = e.target.getAttribute('data-l'); if(l === null || connected.has(+l)) return;
+    const i = +l, p = pt(e);
+    const line = mk('line', {x1: 46, y1: ys[i], x2: p.x, y2: p.y, stroke: colors[i], 'stroke-width': 10, 'stroke-linecap': 'round'});
+    lines.appendChild(line); drag = {i, line};
+    try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+    sfx.blip(500); e.preventDefault();
+  });
+  svg.addEventListener('pointermove', e => { if(!drag) return; const p = pt(e); drag.line.setAttribute('x2', p.x); drag.line.setAttribute('y2', p.y); });
+  const end = e => {
+    if(!drag) return;
+    const p = pt(e); let slot = -1;
+    ys.forEach((y, s) => { if(Math.hypot(p.x - 354, p.y - y) < 34) slot = s; });
+    if(slot >= 0 && rightOrder[slot] === drag.i){
+      drag.line.setAttribute('x2', 354); drag.line.setAttribute('y2', ys[slot]);
+      connected.add(drag.i); sfx.good(); st.className = 'status good'; st.textContent = `${connected.size} / 4 connected`;
+      if(connected.size === 4){ st.textContent = 'Alarm disabled!'; setTimeout(done, 500); }
+    } else {
+      drag.line.remove();
+      if(slot >= 0){ sfx.bad(); shake(svg); st.className = 'status bad'; st.textContent = 'Wrong plug! ⚡'; }
+    }
+    drag = null;
+  };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+  return () => {};
+}
+
+/* ================== Trial 5: force the door ================== */
+function gameMash(root, done){
+  root.innerHTML = `<div class="tag">Trial 5 / 5 · The door</div><h2>Force it open!</h2>
+    <p>The door is heavy and keeps sliding shut. Tap PUSH (or Space) as fast as you can!</p>
+    <div class="meter"><div id="fill"></div></div>
+    <div class="center"><button class="btn mashBtn" id="push">PUSH!</button></div><div class="status" id="st"></div>`;
+  const fill = root.querySelector('#fill'), push = root.querySelector('#push'), st = root.querySelector('#st');
+  let v = 0, alive = true, raf, last = performance.now();
+  const lines = ['Come on!', 'It\'s moving!', 'Harder!!', 'ALMOST!!!'];
+  function bump(){ if(!alive) return; v = Math.min(100, v + 7); sfx.blip(200 + v * 6); }
+  function loop(now){
+    if(!alive) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    v = Math.max(0, v - (14 + v * .3) * dt);
+    fill.style.width = v + '%';
+    st.className = 'status'; st.textContent = v > 4 ? lines[Math.min(3, Math.floor(v / 25))] : '';
+    if(v >= 100){ alive = false; sfx.boom(); st.className = 'status good'; st.textContent = 'THE DOOR IS OPEN!'; setTimeout(done, 600); return; }
+    raf = requestAnimationFrame(loop);
+  }
+  push.addEventListener('pointerdown', e => { e.preventDefault(); bump(); });
+  const onKey = e => { if(e.code === 'Space'){ e.preventDefault(); if(!e.repeat) bump(); } };
+  addEventListener('keydown', onKey);
+  raf = requestAnimationFrame(loop);
+  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', onKey); };
+}
+
+/* ================== Finale (the bait) ================== */
+async function finale(){
+  stage.innerHTML = `<div class="card center">
+    <svg class="vaultArt spin" viewBox="0 0 170 170" id="va">${vaultSVG()}</svg>
+    <h2>THE GOLDEN VAULT</h2>
+    <div class="log" id="log"></div>
+    <div class="bar"><div id="pb"></div></div>
+    <div class="small" id="pct">0%</div>
+  </div>`;
+  const log = $('#log'), pb = $('#pb'), pct = $('#pct');
+  const say = async (t, ms = 700) => { log.textContent += '> ' + t + '\n'; sfx.tick(); await wait(ms); };
+  await say('All 5 trials verified ✔');
+  await say('Releasing vault bolts…');
+  await say('Decrypting the Legendary Prize…', 300);
+  for(let p = 0; p <= 99; p += 1 + rand(3)){ pb.style.width = p + '%'; pct.textContent = p + '%'; if(p % 9 === 0) sfx.tick(); await wait(45); }
+  pb.style.width = '99%'; pct.textContent = '99%';
+  await wait(1300);
+  await say('Prize located. Revealing in 3…', 800);
+  await say('2…', 800);
+  await say('1…', 900);
+  krissed();
+}
+
+/* ================== YouTube player ================== */
+const vids = KRIS_VIDEOS.map(v => ({ id: (String(v.id).match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/) || [, v.id])[1], start: v.start || 0 }));
+let yt = null, ytReady = false, ytFailed = vids.length === 0, vidIdx = 0, revealed = false, mode = 'none', fallbackTimer = null;
+function loadYT(){
+  if(ytFailed || document.getElementById('ytapi')) return;
+  const s = document.createElement('script'); s.id = 'ytapi'; s.src = 'https://www.youtube.com/iframe_api';
+  s.onerror = () => { ytFailed = true; if(revealed && mode === 'video') useFallback(); };
+  document.head.appendChild(s);
+}
+window.onYouTubeIframeAPIReady = () => {
+  try{
+    yt = new YT.Player('ytbox', {
+      videoId: vids[0].id,
+      playerVars: { playsinline: 1, rel: 0, controls: 1, modestbranding: 1, fs: 1, start: vids[0].start },
+      events: {
+        onReady: () => { ytReady = true; if(revealed && mode === 'video') playVid(); },
+        onStateChange: e => {
+          if(e.data === YT.PlayerState.ENDED){ yt.seekTo(vids[vidIdx].start, true); yt.playVideo(); } // loop
+          if(e.data === YT.PlayerState.PLAYING && !yt.isMuted()) $('#soundTap').style.display = 'none';
+        },
+        onError: () => {
+          vidIdx++;
+          if(vidIdx < vids.length){
+            const v = vids[vidIdx];
+            if(revealed) { yt.loadVideoById({ videoId: v.id, startSeconds: v.start }); setTimeout(checkSound, 1500); }
+            else yt.cueVideoById({ videoId: v.id, startSeconds: v.start });
+          } else { ytFailed = true; if(revealed) useFallback(); }
+        }
+      }
+    });
+  }catch(e){ ytFailed = true; }
+};
+function playVid(){
+  clearTimeout(fallbackTimer);
+  const v = vids[vidIdx];
+  try{
+    yt.seekTo(v.start, true);
+    if(muted) yt.mute(); else { yt.unMute(); yt.setVolume(100); }
+    yt.playVideo();
+  }catch(e){}
+  setTimeout(checkSound, 1200);
+}
+// Phones (esp. iPhone) block autoplay with sound: fall back to muted autoplay + a "tap for sound" button.
+function checkSound(){
+  if(!revealed || mode !== 'video' || !yt) return;
+  let st = -1; try{ st = yt.getPlayerState(); }catch(e){}
+  if(st !== 1){ try{ yt.mute(); yt.playVideo(); }catch(e){} }
+  setTimeout(() => {
+    try{ if(!muted && (yt.isMuted() || yt.getPlayerState() !== 1)) $('#soundTap').style.display = 'block'; }catch(e){}
+  }, 500);
+}
+$('#soundTap').addEventListener('click', () => {
+  muted = false; $('#muteBtn').textContent = '🔇 Mute';
+  try{ yt.unMute(); yt.setVolume(100); yt.playVideo(); }catch(e){}
+  $('#soundTap').style.display = 'none';
+  setTimeout(() => { try{ if(yt.isMuted()) $('#soundTap').textContent = '🔊 Tap the video\'s speaker icon'; }catch(e){} }, 700);
+});
+function useFallback(){
+  clearTimeout(fallbackTimer);
+  mode = 'dancer'; $('#kris').classList.remove('video');
+  try{ yt && yt.pauseVideo(); }catch(e){}
+  if(!muted) startMusic();
+}
+
+function krissed(){
+  $('#flash').classList.remove('go'); void $('#flash').offsetWidth; $('#flash').classList.add('go');
+  sfx.boom();
+  $('#bigword').innerHTML = 'KRISSED!'.split('').map((c, i) => `<span style="animation-delay:${i * .06}s">${c}</span>`).join('');
+  revealed = true;
+  $('#kris').classList.add('show');
+  $('#kris').scrollTop = 0;
+  if(!ytFailed){
+    mode = 'video'; $('#kris').classList.add('video');
+    if(ytReady) playVid();
+    else fallbackTimer = setTimeout(() => { if(!ytReady) useFallback(); }, 4000);
+  } else useFallback();
+  startConfetti();
+}
+
+$('#againBtn').onclick = () => {
+  revealed = false; clearTimeout(fallbackTimer);
+  try{ yt && yt.pauseVideo(); }catch(e){}
+  $('#soundTap').style.display = 'none';
+  stopMusic(); stopConfetti(); $('#kris').classList.remove('show'); intro();
+};
+$('#muteBtn').onclick = () => {
+  muted = !muted;
+  $('#muteBtn').textContent = muted ? '🔊 Unmute' : '🔇 Mute';
+  if(mode === 'video' && yt){ try{ if(muted) yt.mute(); else { yt.unMute(); yt.setVolume(100); yt.playVideo(); } }catch(e){} $('#soundTap').style.display = 'none'; }
+  else { if(muted) stopMusic(); else startMusic(); }
+};
+
+/* ================== confetti ================== */
+let confRaf = null;
+function startConfetti(){
+  const cv = $('#confetti'), ctx = cv.getContext('2d');
+  const resize = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  resize(); addEventListener('resize', resize);
+  const cols = ['#fff', '#ffdf7e', '#ff2d95', '#7cf7ff', '#b7ff6b'];
+  const parts = Array.from({length: 140}, () => ({x: Math.random() * innerWidth, y: Math.random() * -innerHeight, vy: 80 + Math.random() * 160, vx: -40 + Math.random() * 80, s: 5 + Math.random() * 7, r: Math.random() * 6, vr: -5 + Math.random() * 10, c: cols[rand(cols.length)]}));
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for(const p of parts){
+      p.y += p.vy * dt; p.x += p.vx * dt; p.r += p.vr * dt;
+      if(p.y > cv.height + 20){ p.y = -20; p.x = Math.random() * cv.width; }
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s/2, -p.s/4, p.s, p.s/2); ctx.restore();
+    }
+    confRaf = requestAnimationFrame(loop);
+  }
+  confRaf = requestAnimationFrame(loop);
+}
+function stopConfetti(){ cancelAnimationFrame(confRaf); const cv = $('#confetti'); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }
+
+intro();
+</script>
+</body>
+</html>
