@@ -319,7 +319,7 @@ function cleared(){
 
 /* ================== Trial 1: keypad memory ================== */
 function gameKeypad(root, done){
-  const LEN = 5; let code = [], input = [], accepting = false, alive = true;
+  const LEN = 6; let code = [], input = [], accepting = false, alive = true;
   root.innerHTML = `<div class="tag">Trial 1 / 5 · Keypad</div><h2>Memorize the code</h2>
     <p>The keypad flashes a ${LEN}-digit code, one digit at a time. Watch closely, then punch it in.</p>
     <div class="display" id="disp"></div><div class="keypad" id="kp"></div><div class="status" id="st"></div>`;
@@ -338,7 +338,7 @@ function gameKeypad(root, done){
     for(let i = 0; i < LEN; i++){
       if(!alive) return;
       disp.textContent = code.map((d, j) => j === i ? d : '·').join('');
-      sfx.blip(380 + code[i] * 50); await wait(700);
+      sfx.blip(380 + code[i] * 50); await wait(560);
       disp.textContent = '·'.repeat(LEN); await wait(160);
     }
     if(!alive) return;
@@ -361,7 +361,7 @@ function gameKeypad(root, done){
 
 /* ================== Trial 2: catch coins ================== */
 function gameCoins(root, done){
-  const GOAL = 12;
+  const GOAL = 15;
   root.innerHTML = `<div class="tag">Trial 2 / 5 · The loot</div><h2>Grab the gold</h2>
     <p>Move your bag (mouse, finger or ← →). Catch ${GOAL} coins. Bombs make you drop 3!</p>
     <div class="hudline"><span>💰 <span id="cc">0</span> / ${GOAL}</span><span id="msg"></span></div>
@@ -369,7 +369,7 @@ function gameCoins(root, done){
   const cv = root.querySelector('#cv'), ctx = cv.getContext('2d'), cc = root.querySelector('#cc'), msg = root.querySelector('#msg');
   const W = 480, H = 400, dpr = window.devicePixelRatio || 1;
   cv.width = W * dpr; cv.height = H * dpr; ctx.scale(dpr, dpr);
-  const bag = {x: W/2, w: 84}; let items = [], score = 0, last = performance.now(), spawn = 0, raf, alive = true, flash = 0;
+  const bag = {x: W/2, w: 74}; let items = [], score = 0, last = performance.now(), spawn = 0, raf, alive = true, flash = 0;
   const keys = {};
   const toX = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * W; };
   const onMove = e => { bag.x = toX(e); };
@@ -384,8 +384,8 @@ function gameCoins(root, done){
     bag.x = Math.max(bag.w/2, Math.min(W - bag.w/2, bag.x));
     spawn -= dt;
     if(spawn <= 0){
-      const bomb = Math.random() < .3;
-      items.push({x: 20 + Math.random() * (W - 40), y: -20, vy: 140 + score * 12 + Math.random() * 60, bomb, r: bomb ? 15 : 13, rot: Math.random()*6});
+      const bomb = Math.random() < .38;
+      items.push({x: 20 + Math.random() * (W - 40), y: -20, vy: 165 + score * 13 + Math.random() * 70, bomb, r: bomb ? 15 : 13, rot: Math.random()*6});
       spawn = .55 - Math.min(.25, score * .02);
     }
     for(const it of items){
@@ -452,7 +452,7 @@ function gameLock(root, done){
     </div><div class="status" id="st"></div>`;
   const dial = root.querySelector('#dial'), zone = root.querySelector('#zone'), needle = root.querySelector('#needle'), st = root.querySelector('#st');
   const pinEls = [...root.querySelectorAll('.pin')];
-  let angle = 0, speed = 130, dir = 1, pins = 0, zc = 0, zw = 46, alive = true, raf, last = performance.now(), locked = false;
+  let angle = 0, speed = 155, dir = 1, pins = 0, zc = 0, zw = 38, alive = true, raf, last = performance.now(), locked = false;
   const P = a => { const r = a * Math.PI / 180; return `${130 + 100 * Math.sin(r)} ${130 - 100 * Math.cos(r)}`; };
   function newZone(){
     do { zc = rand(360); } while(Math.abs(((zc - angle + 540) % 360) - 180) < 80);
@@ -471,7 +471,7 @@ function gameLock(root, done){
     if(diff <= zw/2 + 3){
       pins++; sfx.good(); st.className = 'status good'; st.textContent = 'Click!';
       if(pins >= PINS){ pinEls.forEach(p => p.classList.add('on')); locked = true; alive = false; st.textContent = 'Lock open!'; setTimeout(done, 500); return; }
-      speed += 55; dir *= -1; zw = Math.max(26, zw - 8);
+      speed += 65; dir *= -1; zw = Math.max(22, zw - 7);
     } else {
       pins = Math.max(0, pins - 1); sfx.bad(); shake(dial); st.className = 'status bad'; st.textContent = 'Miss! A pin slipped.';
     }
@@ -487,11 +487,11 @@ function gameLock(root, done){
 
 /* ================== Trial 4: wires ================== */
 function gameWires(root, done){
-  const colors = ['#ff5a6e', '#4da3ff', '#f5c542', '#3ddc97'];
-  const ys = [50, 115, 180, 245];
-  const rightOrder = shuffle([0, 1, 2, 3]);
+  const colors = ['#ff5a6e', '#4da3ff', '#f5c542', '#3ddc97', '#b46bff'];
+  const ys = [38, 94, 150, 206, 262];
+  const rightOrder = shuffle([0, 1, 2, 3, 4]);
   root.innerHTML = `<div class="tag">Trial 4 / 5 · The alarm</div><h2>Fix the wiring</h2>
-    <p>Drag each wire on the left to the plug of the same colour on the right.</p>
+    <p>Drag each wire on the left to the plug of the same colour on the right. Careful: a wrong plug shorts the circuit and resets ALL wires!</p>
     <svg class="wires" viewBox="0 0 400 300" id="wsvg"></svg><div class="status" id="st"></div>`;
   const svg = root.querySelector('#wsvg'), st = root.querySelector('#st');
   const NS = 'http://www.w3.org/2000/svg';
@@ -520,14 +520,14 @@ function gameWires(root, done){
   const end = e => {
     if(!drag) return;
     const p = pt(e); let slot = -1;
-    ys.forEach((y, s) => { if(Math.hypot(p.x - 354, p.y - y) < 34) slot = s; });
+    ys.forEach((y, s) => { if(Math.hypot(p.x - 354, p.y - y) < 28) slot = s; });
     if(slot >= 0 && rightOrder[slot] === drag.i){
       drag.line.setAttribute('x2', 354); drag.line.setAttribute('y2', ys[slot]);
-      connected.add(drag.i); sfx.good(); st.className = 'status good'; st.textContent = `${connected.size} / 4 connected`;
-      if(connected.size === 4){ st.textContent = 'Alarm disabled!'; setTimeout(done, 500); }
+      connected.add(drag.i); sfx.good(); st.className = 'status good'; st.textContent = `${connected.size} / ${colors.length} connected`;
+      if(connected.size === colors.length){ st.textContent = 'Alarm disabled!'; setTimeout(done, 500); }
     } else {
       drag.line.remove();
-      if(slot >= 0){ sfx.bad(); shake(svg); st.className = 'status bad'; st.textContent = 'Wrong plug! ⚡'; }
+      if(slot >= 0){ sfx.bad(); shake(svg); lines.innerHTML = ''; connected.clear(); st.className = 'status bad'; st.textContent = '⚡ Short circuit! All wires reset.'; }
     }
     drag = null;
   };
@@ -544,7 +544,7 @@ function gameMash(root, done){
   const fill = root.querySelector('#fill'), push = root.querySelector('#push'), st = root.querySelector('#st');
   let v = 0, alive = true, raf, last = performance.now();
   const lines = ['Come on!', 'It\'s moving!', 'Harder!!', 'ALMOST!!!'];
-  function bump(){ if(!alive) return; v = Math.min(100, v + 7); sfx.blip(200 + v * 6); }
+  function bump(){ if(!alive) return; v = Math.min(100, v + 7.35); sfx.blip(200 + v * 6); }
   function loop(now){
     if(!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
