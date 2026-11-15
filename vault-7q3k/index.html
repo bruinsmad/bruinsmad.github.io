@@ -544,13 +544,13 @@ function gameMash(root, done){
   const fill = root.querySelector('#fill'), push = root.querySelector('#push'), st = root.querySelector('#st');
   let v = 0, alive = true, raf, last = performance.now(), t0 = performance.now();
   const lines = ['Come on!', 'It\'s moving!', 'Harder!!', 'ALMOST!!!'];
-  function bump(){ if(!alive) return; v = Math.min(100, v + 9); sfx.blip(200 + v * 6); if(v >= 100) win(); }
+  function bump(){ if(!alive) return; v = Math.min(100, v + 8); sfx.blip(200 + v * 6); if(v >= 100) win(); }
   function win(){ alive = false; cancelAnimationFrame(raf); fill.style.width = '100%'; sfx.boom(); st.className = 'status good'; st.textContent = 'THE DOOR IS OPEN!'; setTimeout(done, 600); }
   function loop(now){
     if(!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
-    const ease = Math.max(.45, 1 - (now - t0) / 40000); // door gets lighter the longer you try
-    v = Math.max(0, v - (12 + v * .15) * ease * dt);
+    const ease = Math.max(.55, 1 - (now - t0) / 45000); // door gets lighter the longer you try
+    v = Math.max(0, v - (15 + v * .25) * ease * dt);
     fill.style.width = v + '%';
     st.className = 'status'; st.textContent = v > 4 ? lines[Math.min(3, Math.floor(v / 25))] : '';
     raf = requestAnimationFrame(loop);
