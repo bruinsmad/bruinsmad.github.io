@@ -86,7 +86,7 @@ svg.wires{width:100%;display:block;background:#070b18;border:2px solid var(--lin
 #kris.video .vidWrap{display:block}
 #kris.video .dancer{display:none}
 #soundTap{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;display:none;font-family:Bungee;font-size:15px;background:#fff;color:#ff2d95;border:none;border-radius:999px;padding:10px 16px;box-shadow:0 4px 0 #ff2d95;animation:bounce .48s ease-in-out infinite alternate}
-.big{font-family:Bungee;font-size:clamp(46px,15vw,110px);line-height:1;margin:2px 0 6px;color:#fff;text-shadow:5px 5px 0 #ff2d95,10px 10px 0 #2b0057}
+.big{font-family:Bungee;font-size:clamp(34px,10.5vw,96px);line-height:1;margin:2px 0 6px;color:#fff;text-shadow:5px 5px 0 #ff2d95,10px 10px 0 #2b0057}
 .big span{display:inline-block;animation:bounce .48s ease-in-out infinite alternate}
 @keyframes bounce{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-14px) rotate(3deg)}}
 .dancer{height:min(42vh,340px);width:auto;flex:0 1 auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.4))}
@@ -132,7 +132,7 @@ input[type=range].dialr::-moz-range-thumb{width:34px;height:34px;border-radius:5
   .ball{width:60px;height:60px;left:auto;right:16px;transform:none}
   .krisInner{padding-top:10px}
   .yjg{font-size:16px}
-  .big{font-size:44px;margin:0 0 6px}
+  .big{font-size:38px;margin:0 0 6px}
   .vidWrap{width:min(80vw,calc((100dvh - 150px) * 16 / 9));min-width:240px}
   .dancer{height:calc(100dvh - 160px)}
   .sub{margin:6px 0 8px;font-size:13px}
@@ -181,7 +181,7 @@ input[type=range].dialr::-moz-range-thumb{width:34px;height:34px;border-radius:5
         </g>
       </g>
     </svg>
-    <div class="sub">Send this to your friends to totally Kris them! 💅</div>
+    <div class="sub">Send this to a friend. Don't tell them. 😈</div>
     <div class="krisBtns"><button class="btn" id="againBtn">🔁 Play again</button><button class="btn" id="muteBtn">🔇 Mute</button></div>
   </div>
 </div>
@@ -193,9 +193,7 @@ input[type=range].dialr::-moz-range-thumb{width:34px;height:34px;border-radius:5
    start = seconds into the video. If none work (or YouTube is blocked),
    the game falls back to the built-in disco dancer + music. */
 const KRIS_VIDEOS = [
-  { id: 'UMMpicSPL-E', start: 0 },
-  { id: 'kPy-liHYNoc', start: 0 },
-  { id: 'Lj_BmHnR9p0', start: 0 },
+  { id: 'dQw4w9WgXcQ', start: 0 },   // Rick Astley - Never Gonna Give You Up (official)
 ];
 
 /* ================== helpers ================== */
@@ -956,7 +954,7 @@ function useFallback(){
 function krissed(){
   $('#flash').classList.remove('go'); void $('#flash').offsetWidth; $('#flash').classList.add('go');
   sfx.boom();
-  $('#bigword').innerHTML = 'KRISSED!'.split('').map((c, i) => `<span style="animation-delay:${i * .06}s">${c}</span>`).join('');
+  $('#bigword').innerHTML = 'RICKROLLED!'.split('').map((c, i) => `<span style="animation-delay:${i * .06}s">${c}</span>`).join('');
   revealed = true;
   $('#kris').classList.add('show');
   $('#kris').scrollTop = 0;
